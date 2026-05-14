@@ -6,6 +6,22 @@ grow the dataset for machine learning surrogate models.
 
 ---
 
+## What is a Jet Engine Bracket?
+
+A **jet engine bracket (JEB)** is a structural component that attaches a jet
+engine to the wing or fuselage of an aircraft. It must transfer significant
+mechanical loads — vertical lift, lateral forces, diagonal combined loads, and
+torsion — through four bolt holes into the airframe, while being as light as
+possible. This mass-versus-stiffness trade-off makes bracket design a classic
+engineering optimisation problem.
+
+Because every bracket in SimJEB was designed for the same engineering task
+(same bolt pattern, same pin interface, same four load cases), the dataset is
+uniquely well-suited for training surrogate models: the inputs are geometry,
+the outputs are structural performance.
+
+---
+
 ## Source Dataset — SimJEB
 
 **SimJEB: Simulated Jet Engine Bracket Dataset**
@@ -44,36 +60,65 @@ simulation input.
 
 ---
 
-## Notebooks
+## Data Setup
 
-| # | Notebook | Description | Status |
-|---|----------|-------------|--------|
-| 01 | `01_cad_to_fem.ipynb` | Convert new CAD geometries to OptiStruct FEM | 🔜 Coming soon |
-| 02 | `02_fem_simulation_synthesis.ipynb` | Read, simulate, visualise, and synthesise SimJEB FEM files | ✅ Ready |
+### What's included
+
+The `data/raw/` folder in this repo contains **one sample `.fem` file** so you
+can run the pipeline immediately and verify everything works before committing
+to the full dataset.
+
+### Getting the full dataset
+
+To run the pipeline on all 381 designs:
+
+1. Create a free account at [Harvard Dataverse](https://dataverse.harvard.edu)
+2. Download the FEM zip file from the SimJEB dataset page:
+   [dataverse.harvard.edu — SimJEB FEM files](https://dataverse.harvard.edu/file.xhtml?fileId=4640545&version=4.0&toolType=PREVIEW)
+3. Unzip and place all `.fem` files into `data/raw/`
+
+### Where outputs go
+
+```
+data/
+├── raw/          ← put your .fem files here (only sample file included in repo)
+└── augmented/    ← synthetic .fem files and master CSV land here automatically
+```
 
 ---
 
-## Notebook 02 — Pipeline Overview
-SimJEB .fem files (381 designs)
-│
-▼
-Section 1: Read & Parse
-├── GRID nodes, CTETRA elements
-├── RBE2 (bolt-hole rigid connections → fixed BCs)
-├── RBE3 (pin interface → load application region)
-└── SPC (additional single-point constraints)
-│
-▼
-Section 2: Visualise
-├── Surface mesh render (3D + 4-view orthographic)
-└── Side-by-side comparison of variants
-│
-▼
-Section 3: Synthesise + Simulate
-├── 6 geometric transformation strategies
-├── FEA under 4 load cases per variant
-├── Von Mises stress + displacement extraction
-└── Export to master CSV
+## Notebook
+
+| Notebook | Description | Status |
+|----------|-------------|--------|
+| `fem_simulation_synthesis.ipynb` | Read, simulate, visualise, and synthesise SimJEB FEM files | ✅ Ready |
+
+---
+
+## Pipeline Overview
+
+```
+data/raw/  (.fem files)
+        │
+        ▼
+  Section 1: Read & Parse
+  ├── GRID nodes, CTETRA elements
+  ├── RBE2 (bolt-hole rigid connections → fixed BCs)
+  ├── RBE3 (pin interface → load application region)
+  └── SPC (additional single-point constraints)
+        │
+        ▼
+  Section 2: Visualise
+  ├── Surface mesh render (3D + 4-view orthographic)
+  └── Side-by-side comparison of variants
+        │
+        ▼
+  Section 3: Synthesise + Simulate
+  ├── 6 geometric transformation strategies
+  ├── FEA under 4 load cases per variant
+  ├── Von Mises stress + displacement extraction
+  └── Export → data/augmented/all_features.csv
+```
 
 ---
 
@@ -127,17 +172,16 @@ Each row = one bracket (original or synthetic).
 
 ## Setup
 
-Runs on **Google Colab** (L4 GPU recommended for large meshes).
-
 ```bash
-pip install numpy==1.26.4 scipy pyNastran==1.4.1 scikit-fem==11.0.0 matplotlib
+pip install -r requirements.txt
+jupyter notebook notebooks/02_fem_simulation_synthesis.ipynb
 ```
 
-Set your paths in the notebook:
+Path variables in the notebook (already set to match the repo structure):
 
 ```python
-INPUT_DIR  = '/content/drive/MyDrive/content/fem'        # SimJEB .fem files
-OUTPUT_DIR = '/content/drive/MyDrive/content/fem/augmented'
+INPUT_DIR  = 'data/raw'
+OUTPUT_DIR = 'data/augmented'
 ```
 
 ---
